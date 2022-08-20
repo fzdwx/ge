@@ -1,66 +1,67 @@
 package ui
 
 import (
-	"errors"
 	"github.com/fzdwx/x/str"
 	"os"
-	"unicode/utf8"
 )
 
 type Document struct {
-	rows []Row
+	rows Rows
 }
 
-func (d *Document) String() string {
+func (d *Document) Render() string {
 	fluent := str.NewFluent()
 
-	for _, row := range d.rows {
-		fluent.Str(row.String())
+	switch d.Height() {
+	case 0:
+		return str.Empty
+	case 1:
+		return d.rows[0].String()
+	}
+
+	fluent.Str(d.rows[0].String())
+	for _, s := range d.rows[1:] {
+		fluent.NewLine()
+		fluent.Str(s.String())
 	}
 
 	return fluent.String()
 }
 
 func NewDocument() *Document {
-	return &Document{}
+	return &Document{rows: Rows{}}
 }
 
 func (d *Document) Load(filename string) error {
-	bytes, err := os.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	if len(bytes) <= 0 {
+	if len(data) <= 0 {
 		return err
 	}
 
-	var rows []Row
-	var row Row
-
-	// todo 默认作为utf-8
-	for i, w := 0, 0; i < len(bytes); i += w {
-		r, width := utf8.DecodeRune(bytes[i:])
-		if r == utf8.RuneError {
-			return errors.New("could not decode rune")
-		}
-
-		if r == '\x1b' && len(row) > 1 || r == '\n' {
-			// a new key sequence has started
-			rows = append(rows, row)
-			row = []rune{}
-		}
-
-		row = append(row, r)
-		w = width
+	rows, err := NewRows(data)
+	if err != nil {
+		return err
 	}
 
 	d.rows = rows
-
 	return nil
 }
 
+// Height get document rows len.
+func (d *Document) Height() int {
+	return d.rows.Len()
+}
+
+func (d *Document) Row(i int) Row {
+	return d.rows.Row(i)
+}
+
 // loadDocument todo 暂时只加载一个
+// document is never null.
 func loadDocument(filenames ...string) (*Document, error) {
 	document := NewDocument()
 
@@ -69,7 +70,7 @@ func loadDocument(filenames ...string) (*Document, error) {
 	}
 
 	if err := document.Load(filenames[0]); err != nil {
-		return nil, err
+		return document, err
 	}
 
 	return document, nil

@@ -1,7 +1,7 @@
 #!/usr/bin/env just --justfile
 
-run:
- go run .
+run file="README.md":
+ go run . {{file}}
 
 update:
   go get -u
