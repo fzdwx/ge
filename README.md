@@ -1,6 +1,3 @@
-# hello world
+# ge
 
-我草
-
-123
-ccc
+text editor.
