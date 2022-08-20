@@ -4,12 +4,13 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/fzdwx/ge/config"
-	"github.com/fzdwx/ge/pkg/teax"
+	"github.com/fzdwx/ge/internal/teax"
+	"github.com/fzdwx/ge/internal/views"
 )
 
 type Ui struct {
 	cfg      *config.Config
-	document *Document
+	document *views.Document
 
 	Program *tea.Program
 	Keymap  *Keymap
@@ -21,7 +22,7 @@ func New(cfg *config.Config) *Ui {
 }
 
 func (u *Ui) Init() tea.Cmd {
-	document, err := loadDocument(u.cfg.Filenames...)
+	document, err := views.LoadDocument(u.cfg.Filenames...)
 	u.document = document
 	return teax.Check(err)
 }

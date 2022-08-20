@@ -1,4 +1,4 @@
-package ui
+package views
 
 import (
 	"github.com/fzdwx/x/str"
@@ -60,9 +60,9 @@ func (d *Document) Row(i int) Row {
 	return d.rows.Row(i)
 }
 
-// loadDocument todo 暂时只加载一个
+// LoadDocument todo 暂时只加载一个
 // document is never null.
-func loadDocument(filenames ...string) (*Document, error) {
+func LoadDocument(filenames ...string) (*Document, error) {
 	document := NewDocument()
 
 	if len(filenames) <= 0 {

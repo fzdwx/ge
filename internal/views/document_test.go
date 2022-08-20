@@ -1,4 +1,4 @@
-package ui
+package views
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ func Test_Load(t *testing.T) {
 
 	//filenames := "document.go"
 	filenames := "C:\\Users\\98065\\IdeaProjects\\ge\\README.md"
-	document, err := loadDocument(filenames)
+	document, err := LoadDocument(filenames)
 	if err != nil {
 		panic(err)
 	}
