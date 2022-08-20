@@ -1,12 +1,18 @@
 package views
 
 import (
+	"github.com/fzdwx/ge/internal/syntax"
 	"github.com/fzdwx/x/str"
 	"os"
 )
 
 type Document struct {
-	rows Rows
+	rows   Rows
+	syntax syntax.Syntax
+}
+
+func NewDocument() *Document {
+	return &Document{rows: Rows{}, syntax: syntax.From("")}
 }
 
 func (d *Document) Render() string {
@@ -25,11 +31,9 @@ func (d *Document) Render() string {
 		fluent.Str(s.String())
 	}
 
-	return fluent.String()
-}
+	raw := fluent.String()
 
-func NewDocument() *Document {
-	return &Document{rows: Rows{}}
+	return d.syntax.Highlight(raw)
 }
 
 func (d *Document) Load(filename string) error {
@@ -37,6 +41,8 @@ func (d *Document) Load(filename string) error {
 	if err != nil {
 		return err
 	}
+
+	d.syntax = syntax.From(filename)
 
 	if len(data) <= 0 {
 		return err
