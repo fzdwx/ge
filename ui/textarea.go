@@ -420,19 +420,40 @@ func (m *Textarea) Update(msg tea.Msg) (*Textarea, tea.Cmd) {
 // View renders the text area in its current state.
 func (m *Textarea) View() string {
 	fluent := str.NewFluent()
-	//lineInfo := m.LineInfo()
 
+	lineInfo := m.LineInfo()
 	for l, line := range m.document.Rows {
 
+		// write line number
 		if m.ShowLineNumbers {
 			fluent.Str(fmt.Sprintf(m.lineNumberFormat, l+1))
 		}
 
 		s := line.String()
-		fluent.Str(s).Space(max(0, m.width-rw.StringWidth(s))).NewLine()
+		sWidth := rw.StringWidth(s)
+		padding := m.width - sWidth
+		if sWidth > m.width {
+			padding -= m.width - sWidth
+		}
+
+		if m.row == l && lineInfo.RowOffset == l {
+			fluent.Str(s[:lineInfo.ColumnOffset])
+			if m.col >= len(line) && lineInfo.CharOffset >= m.width {
+				m.Cursor.SetChar(" ")
+				fluent.Str(m.Cursor.View())
+			} else {
+				m.Cursor.SetChar(string(s[lineInfo.ColumnOffset]))
+				fluent.Str(m.Cursor.View())
+				fluent.Str(s[lineInfo.ColumnOffset+1:])
+			}
+		} else {
+			fluent.Str(s)
+		}
+
+		fluent.Space(max(0, padding)).NewLine()
 	}
 
-	// fill blink
+	// write blank
 	for i := 0; i < m.height; i++ {
 		if m.ShowLineNumbers {
 			lineNumber := m.style.EndOfBuffer.Render(fmt.Sprintf(m.lineNumberFormat, string(m.EndOfBufferCharacter)))
