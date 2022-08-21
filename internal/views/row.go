@@ -79,6 +79,10 @@ func (r Row) RuneWidth(col int) int {
 	return rw.RuneWidth(r[col])
 }
 
+func (r Row) TotalRuneWidth() int {
+	return rw.StringWidth(r.String())
+}
+
 // Len get row len
 func (rs Rows) Len() int {
 	return len(rs)

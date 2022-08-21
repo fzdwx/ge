@@ -51,6 +51,7 @@ func New(cfg *config.Config) *Ui {
 
 func (u *Ui) Init() tea.Cmd {
 	batch := teax.Batch(Blink)
+
 	document, err := views.LoadDocument(u.cfg.Filenames...)
 	u.document = document
 	u.textarea.SetDocument(u.document)

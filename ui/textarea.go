@@ -32,8 +32,8 @@ type pasteErrMsg struct{ error }
 
 // KeyMap is the key bindings for different actions within the textarea.
 type KeyMap struct {
-	CharacterBackward       key.Binding
-	CharacterForward        key.Binding
+	MoveLeft                key.Binding
+	MoveRight               key.Binding
 	DeleteAfterCursor       key.Binding
 	DeleteBeforeCursor      key.Binding
 	DeleteCharacterBackward key.Binding
@@ -46,17 +46,17 @@ type KeyMap struct {
 	MoveUp                  key.Binding
 	LineStart               key.Binding
 	Paste                   key.Binding
-	MoveLeft                key.Binding
-	MoveRight               key.Binding
+	WordLeft                key.Binding
+	WordRight               key.Binding
 }
 
 // DefaultKeyMap is the default set of key bindings for navigating and acting
 // upon the textarea.
 var DefaultKeyMap = KeyMap{
-	CharacterForward:        key.NewBinding(key.WithKeys("right", "ctrl+f")),
-	CharacterBackward:       key.NewBinding(key.WithKeys("left", "ctrl+b")),
-	MoveRight:               key.NewBinding(key.WithKeys("alt+right", "alt+f")),
-	MoveLeft:                key.NewBinding(key.WithKeys("alt+left", "alt+b")),
+	MoveRight:               key.NewBinding(key.WithKeys("right", "ctrl+f")),
+	MoveLeft:                key.NewBinding(key.WithKeys("left", "ctrl+b")),
+	WordRight:               key.NewBinding(key.WithKeys("alt+right", "alt+f")),
+	WordLeft:                key.NewBinding(key.WithKeys("alt+left", "alt+b")),
 	MoveDown:                key.NewBinding(key.WithKeys("down", "ctrl+n")),
 	MoveUp:                  key.NewBinding(key.WithKeys("up", "ctrl+p")),
 	DeleteWordBackward:      key.NewBinding(key.WithKeys("alt+backspace", "ctrl+w")),
@@ -286,7 +286,6 @@ func (m *Textarea) Reset() {
 // (soft-wrapped) line and the (soft-wrapped) line width.
 func (m *Textarea) LineInfo() LineInfo {
 	grid := wrap(m.document.Row(m.row), m.width)
-
 	// Find out which line we are currently on. This can be determined by the
 	// m.col and counting the number of runes that we need to skip.
 	var counter int
@@ -395,7 +394,23 @@ func (m *Textarea) Update(msg tea.Msg) (*Textarea, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.KeyMap.MoveLeft):
-
+			if m.col == 0 && m.row != 0 {
+				m.row--
+				m.CursorEnd()
+				break
+			}
+			if m.col > 0 {
+				m.SetCursor(m.col - 1)
+			}
+		case key.Matches(msg, m.KeyMap.MoveRight):
+			if m.col < m.currentRowLen() {
+				m.SetCursor(m.col + 1)
+			} else {
+				if m.row < m.document.Height()-1 {
+					m.row++
+					m.CursorStart()
+				}
+			}
 		}
 
 	}
@@ -436,15 +451,15 @@ func (m *Textarea) View() string {
 			padding -= m.width - sWidth
 		}
 
-		if m.row == l && lineInfo.RowOffset == l {
-			fluent.Str(s[:lineInfo.ColumnOffset])
-			if m.col >= len(line) && lineInfo.CharOffset >= m.width {
+		if m.row == l /*&& lineInfo.RowOffset == l*/ {
+			fluent.Str(line[:lineInfo.ColumnOffset].String())
+			if m.col >= len(line) /*&& lineInfo.CharOffset >= m.width*/ {
 				m.Cursor.SetChar(" ")
 				fluent.Str(m.Cursor.View())
 			} else {
-				m.Cursor.SetChar(string(s[lineInfo.ColumnOffset]))
+				m.Cursor.SetChar(string(line[lineInfo.ColumnOffset]))
 				fluent.Str(m.Cursor.View())
-				fluent.Str(s[lineInfo.ColumnOffset+1:])
+				fluent.Str(line[lineInfo.ColumnOffset+1:].String())
 			}
 		} else {
 			fluent.Str(s)
