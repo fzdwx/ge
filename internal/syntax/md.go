@@ -1,6 +1,10 @@
 package syntax
 
-import "github.com/charmbracelet/glamour"
+import (
+	"github.com/charmbracelet/glamour"
+	str2 "github.com/fzdwx/x/str"
+	"strings"
+)
 
 type MarkerDown string
 
@@ -11,5 +15,9 @@ func (m MarkerDown) Highlight(str string) string {
 	if err != nil {
 		return str
 	}
-	return render
+
+	// markdown will add 3 more lines of blanks
+	sp := strings.Split(render, str2.NewLine)
+
+	return strings.Join(sp[1:len(sp)-2], str2.NewLine)
 }

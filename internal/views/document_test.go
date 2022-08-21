@@ -14,7 +14,7 @@ func Test_Load(t *testing.T) {
 		panic(err)
 	}
 
-	fmt.Println(document)
+	fmt.Println(document.Render())
 	//
 	//fmt.Println(document.Height())
 	//fmt.Println("row height", document.Height(), "val:", document.Row(document.Height()))
