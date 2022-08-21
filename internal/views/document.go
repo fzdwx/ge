@@ -11,11 +11,7 @@ type Document struct {
 	syntax syntax.Syntax
 }
 
-func NewDocument() *Document {
-	return &Document{rows: Rows{}, syntax: syntax.From("")}
-}
-
-func (d *Document) Render() string {
+func (d *Document) String() string {
 	fluent := str.NewFluent()
 
 	switch d.Height() {
@@ -31,9 +27,15 @@ func (d *Document) Render() string {
 		fluent.Str(s.String())
 	}
 
-	raw := fluent.String()
+	return fluent.String()
+}
 
-	return d.syntax.Highlight(raw)
+func NewDocument() *Document {
+	return &Document{rows: Rows{}, syntax: syntax.From("")}
+}
+
+func (d *Document) Render() string {
+	return d.syntax.Highlight(d.String())
 }
 
 func (d *Document) Load(filename string) error {

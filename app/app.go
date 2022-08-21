@@ -15,6 +15,6 @@ func New(filenames []string) *App {
 }
 
 func (a App) StartUp(ops ...tea.ProgramOption) error {
-	a.ui.Program = tea.NewProgram(a.ui)
+	a.ui.Program = tea.NewProgram(a.ui, ops...)
 	return a.ui.Program.Start()
 }

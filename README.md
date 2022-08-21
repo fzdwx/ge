@@ -1,5 +1,7 @@
 # ge
 
-text editor.
+_text editor._
 
-asd
+[repo](https://github.com/fzdwx/ge)
+
+**asd**

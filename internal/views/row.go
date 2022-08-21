@@ -24,11 +24,6 @@ func NewRows(data []byte) (Rows, error) {
 			break
 		}
 
-		if !prefix {
-			rows = append(rows, row)
-			row = []rune{}
-		}
-
 		for i, w := 0, 0; i < len(b); i += w {
 			r, width := utf8.DecodeRune(b[i:])
 			if r == utf8.RuneError {
@@ -38,8 +33,12 @@ func NewRows(data []byte) (Rows, error) {
 			row = append(row, r)
 			w = width
 		}
+
+		if !prefix {
+			rows = append(rows, row)
+			row = []rune{}
+		}
 	}
-	rows = append(rows, row)
 
 	return rows, nil
 }

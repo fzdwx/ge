@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fzdwx/ge/app"
 	"os"
 
@@ -14,7 +15,7 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := app.New(args).StartUp(); err != nil {
+		if err := app.New(args).StartUp(tea.WithAltScreen()); err != nil {
 			panic(err)
 		}
 	},
