@@ -386,8 +386,8 @@ func (m *Textarea) Update(msg tea.Msg) (*Textarea, tea.Cmd) {
 
 	var cmds []tea.Cmd
 
-	if m.document.Row(m.row) == nil {
-		m.document.Rows[m.row] = make([]rune, 0)
+	if !m.document.Rows.Has(m.row) {
+		m.document.Rows = m.document.Rows.NewLine()
 	}
 
 	switch msg := msg.(type) {
@@ -411,6 +411,10 @@ func (m *Textarea) Update(msg tea.Msg) (*Textarea, tea.Cmd) {
 					m.CursorStart()
 				}
 			}
+		case key.Matches(msg, m.KeyMap.MoveDown):
+			m.MoveDown()
+		case key.Matches(msg, m.KeyMap.MoveUp):
+			m.MoveUp()
 		}
 
 	}
@@ -552,6 +556,71 @@ func (m *Textarea) splitLine(row, col int) {
 func (m *Textarea) SetDocument(document *views.Document) {
 	m.document = document
 	m.Reset()
+}
+
+func (m *Textarea) MoveUp() {
+	li := m.LineInfo()
+	charOffset := max(m.lastCharOffset, li.CharOffset)
+	m.lastCharOffset = charOffset
+
+	if li.RowOffset <= 0 && m.row > 0 {
+		m.row--
+		m.col = m.currentRowLen()
+	} else {
+		// Move the cursor to the end of the previous line.
+		// This can be done by moving the cursor to the start of the line and
+		// then subtracting 2 to account for the trailing space we keep on
+		// soft-wrapped lines.
+		m.col = li.StartColumn - 2
+	}
+
+	nli := m.LineInfo()
+	m.col = nli.StartColumn
+
+	if nli.Width <= 0 {
+		return
+	}
+
+	offset := 0
+	for offset < charOffset {
+		if m.col >= m.currentRowLen() || offset >= nli.CharWidth-1 {
+			break
+		}
+		offset += m.currentRuneWidth()
+		m.col++
+	}
+}
+
+func (m *Textarea) MoveDown() {
+	li := m.LineInfo()
+	charOffset := max(m.lastCharOffset, li.CharOffset)
+	m.lastCharOffset = charOffset
+
+	if li.RowOffset+1 >= li.Height && m.row < m.document.Rows.Len()-1 {
+		m.row++
+		m.col = 0
+	} else {
+		// Move the cursor to the start of the next line. So that we can get
+		// the line information. We need to add 2 columns to account for the
+		// trailing space wrapping.
+		m.col = min(li.StartColumn+li.Width+2, m.currentRowLen()-1)
+	}
+
+	nli := m.LineInfo()
+	m.col = nli.StartColumn
+
+	if nli.Width <= 0 {
+		return
+	}
+
+	offset := 0
+	for offset < charOffset {
+		if m.col > m.currentRowLen() || offset >= nli.CharWidth-1 {
+			break
+		}
+		offset += m.currentRuneWidth()
+		m.col++
+	}
 }
 
 // Paste is a command for pasting from the clipboard into the text input.

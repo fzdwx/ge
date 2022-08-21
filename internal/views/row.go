@@ -92,7 +92,7 @@ func (rs Rows) Len() int {
 func (rs Rows) Row(idx int) Row {
 
 	if idx > rs.Len()-1 {
-		return Row{}
+		return nil
 	}
 
 	return rs[idx]
@@ -120,4 +120,12 @@ func (rs Rows) TotalSize() int {
 		l += rw.StringWidth(string(row))
 	}
 	return l
+}
+
+func (rs Rows) NewLine() Rows {
+	return append(rs, Row{})
+}
+
+func (rs Rows) Has(row int) bool {
+	return row < len(rs)
 }
