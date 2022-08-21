@@ -10,7 +10,7 @@ type (
 	Syntax interface {
 		Type() string
 
-		Highlight(str string) string
+		Highlight(s string) string
 
 		FileName() string
 	}
