@@ -1,44 +1,82 @@
 package ui
 
 import (
-	"fmt"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fzdwx/ge/config"
 	"github.com/fzdwx/ge/internal/teax"
 	"github.com/fzdwx/ge/internal/views"
-	"github.com/fzdwx/x/str"
 )
 
 type (
 	Ui struct {
-		cfg      *config.Config
+		cfg *config.Config
+
+		// current document
 		document *views.Document
+
+		textarea *Textarea
 
 		Program *tea.Program
 		Keymap  *Keymap
-
-		termSize
-	}
-
-	termSize struct {
-		Width  int
-		Height int
 	}
 )
 
+var (
+	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+
+	cursorLineStyle = lipgloss.NewStyle().
+			Background(lipgloss.Color("57")).
+			Foreground(lipgloss.Color("230"))
+
+	placeholderStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("238"))
+
+	focusedPlaceholderStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("99"))
+
+	focusedBorderStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("238"))
+
+	blurredBorderStyle = lipgloss.NewStyle().
+				Border(lipgloss.HiddenBorder())
+)
+
 func New(cfg *config.Config) *Ui {
-	this := &Ui{Keymap: NewKeymap(), cfg: cfg}
+	area := NewTextArea()
+	area.Placeholder = "Type something"
+	area.ShowLineNumbers = true
+	area.Cursor.Style = cursorStyle
+	area.FocusedStyle.Placeholder = focusedPlaceholderStyle
+	area.BlurredStyle.Placeholder = placeholderStyle
+	area.FocusedStyle.CursorLine = cursorLineStyle
+	area.FocusedStyle.Base = focusedBorderStyle
+	area.BlurredStyle.Base = blurredBorderStyle
+	area.KeyMap.DeleteWordBackward.SetEnabled(false)
+	area.KeyMap.MoveDown = key.NewBinding(key.WithKeys("down"))
+	area.KeyMap.MoveUp = key.NewBinding(key.WithKeys("up"))
+	area.Focus()
+	this := &Ui{
+		Keymap:   NewKeymap(),
+		textarea: area,
+		cfg:      cfg,
+	}
 	return this
 }
 
 func (u *Ui) Init() tea.Cmd {
+	batch := teax.Batch(Blink)
 	document, err := views.LoadDocument(u.cfg.Filenames...)
 	u.document = document
-	return teax.Check(err)
+	u.textarea.SetDocument(u.document)
+	batch.Check(err)
+	return batch.Cmd()
 }
 
 func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	batch := teax.Batch()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -46,17 +84,19 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return u, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		u.termSize = termSize{Width: msg.Width, Height: msg.Height}
+		u.textarea.SetHeight(msg.Height - 1)
+		u.textarea.SetWidth(msg.Width)
 	case teax.ErrorMsg:
 		// todo handle error msg
 	}
-	return u, nil
+
+	textarea, cmd := u.textarea.Update(msg)
+	batch.Append(cmd)
+	u.textarea = textarea
+
+	return u, batch.Cmd()
 }
 
 func (u *Ui) View() string {
-	return u.document.Render() + str.NewLine + u.termSize.String()
-}
-
-func (t termSize) String() string {
-	return fmt.Sprintf("w:%d - h:%d", t.Width, t.Height)
+	return u.textarea.View()
 }

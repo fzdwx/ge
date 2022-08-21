@@ -2,36 +2,20 @@ package views
 
 import (
 	"github.com/fzdwx/ge/internal/syntax"
-	"github.com/fzdwx/x/str"
 	"os"
 )
 
 type Document struct {
-	rows   Rows
+	Rows   Rows
 	syntax syntax.Syntax
 }
 
 func (d *Document) String() string {
-	fluent := str.NewFluent()
-
-	switch d.Height() {
-	case 0:
-		return str.Empty
-	case 1:
-		return d.rows[0].String()
-	}
-
-	fluent.Str(d.rows[0].String())
-	for _, s := range d.rows[1:] {
-		fluent.NewLine()
-		fluent.Str(s.String())
-	}
-
-	return fluent.String()
+	return d.Rows.String()
 }
 
 func NewDocument() *Document {
-	return &Document{rows: Rows{}, syntax: syntax.From("")}
+	return &Document{Rows: Rows{}, syntax: syntax.From("")}
 }
 
 func (d *Document) Render() string {
@@ -55,17 +39,37 @@ func (d *Document) Load(filename string) error {
 		return err
 	}
 
-	d.rows = rows
+	d.Rows = rows
 	return nil
 }
 
-// Height get document rows len.
+// Height get document Rows len.
 func (d *Document) Height() int {
-	return d.rows.Len()
+	return d.Rows.Len()
 }
 
+// Row get row by index
 func (d *Document) Row(i int) Row {
-	return d.rows.Row(i)
+	return d.Rows.Row(i)
+}
+
+// InsertRune insert rune at specified row and column
+func (d *Document) InsertRune(r rune, row int, col int) {
+	if r == '\n' {
+		d.SplitLine(row, col)
+		return
+	}
+
+	d.Rows.InsertRune(r, row, col)
+}
+
+func (d *Document) SplitLine(row int, col int) {
+	d.Rows.SplitLine(row, col)
+}
+
+// Length  Value returns the value of the text input.
+func (d *Document) Length() int {
+	return d.Rows.TotalSize()
 }
 
 // LoadDocument todo 暂时只加载一个

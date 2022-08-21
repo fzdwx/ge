@@ -3,6 +3,7 @@ package cmd
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fzdwx/ge/app"
+	"github.com/fzdwx/ge/internal/logx"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -15,6 +16,8 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
+
+		logx.InitLog(*debugP, "./ge.log")
 		if err := app.New(args).StartUp(tea.WithAltScreen()); err != nil {
 			panic(err)
 		}
@@ -30,6 +33,10 @@ func Execute() {
 	}
 }
 
+var (
+	debugP *bool
+)
+
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -40,4 +47,5 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	debugP = rootCmd.Flags().BoolP("debug", "d", true, "sets log level to debug")
 }
