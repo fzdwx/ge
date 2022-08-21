@@ -105,11 +105,9 @@ type LineInfo struct {
 // https://github.com/charmbracelet/lipgloss
 type Style struct {
 	Base             lipgloss.Style
-	CursorLine       lipgloss.Style
 	CursorLineNumber lipgloss.Style
 	EndOfBuffer      lipgloss.Style
 	LineNumber       lipgloss.Style
-	Placeholder      lipgloss.Style
 	Prompt           lipgloss.Style
 	Text             lipgloss.Style
 }
@@ -119,7 +117,6 @@ type Textarea struct {
 	Err error
 
 	// General settings.
-	Placeholder          string
 	ShowLineNumbers      bool
 	EndOfBufferCharacter rune
 	KeyMap               KeyMap
@@ -211,21 +208,17 @@ func NewTextArea() *Textarea {
 func DefaultStyles() (Style, Style) {
 	focused := Style{
 		Base:             lipgloss.NewStyle(),
-		CursorLine:       lipgloss.NewStyle().Background(lipgloss.AdaptiveColor{Light: "255", Dark: "0"}),
 		CursorLineNumber: lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "240"}),
 		EndOfBuffer:      lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "254", Dark: "0"}),
 		LineNumber:       lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "249", Dark: "7"}),
-		Placeholder:      lipgloss.NewStyle().Foreground(lipgloss.Color("7")),
 		Prompt:           lipgloss.NewStyle().Foreground(lipgloss.Color("7")),
 		Text:             lipgloss.NewStyle(),
 	}
 	blurred := Style{
 		Base:             lipgloss.NewStyle(),
-		CursorLine:       lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "245", Dark: "7"}),
 		CursorLineNumber: lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "249", Dark: "7"}),
 		EndOfBuffer:      lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "254", Dark: "0"}),
 		LineNumber:       lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "249", Dark: "7"}),
-		Placeholder:      lipgloss.NewStyle().Foreground(lipgloss.Color("7")),
 		Prompt:           lipgloss.NewStyle().Foreground(lipgloss.Color("7")),
 		Text:             lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "245", Dark: "7"}),
 	}
@@ -426,35 +419,20 @@ func (m *Textarea) Update(msg tea.Msg) (*Textarea, tea.Cmd) {
 
 // View renders the text area in its current state.
 func (m *Textarea) View() string {
-	m.Cursor.TextStyle = m.style.CursorLine
-
 	fluent := str.NewFluent()
-	var style lipgloss.Style
 	//lineInfo := m.LineInfo()
 
 	for l, line := range m.document.Rows {
 
-		if m.row == l {
-			style = m.style.CursorLine
-		} else {
-			style = m.style.Text
-		}
-
 		if m.ShowLineNumbers {
-			fluent.Str(style.Render(m.style.CursorLineNumber.Render(fmt.Sprintf(m.lineNumberFormat, l+1))))
-		} else {
-			fluent.Str(style.Render(m.style.LineNumber.Render(fmt.Sprintf(m.lineNumberFormat, l+1))))
+			fluent.Str(fmt.Sprintf(m.lineNumberFormat, l+1))
 		}
 
 		s := line.String()
-		padding := m.width - rw.StringWidth(s)
-		fluent.Str(style.Render(s))
-
-		fluent.Str(style.Render(strings.Repeat(" ", max(0, padding)))).NewLine()
+		fluent.Str(s).Space(max(0, m.width-rw.StringWidth(s))).NewLine()
 	}
 
-	// Always show at least `m.Height` lines at all times.
-	// To do this we can simply pad out a few extra new lines in the view.
+	// fill blink
 	for i := 0; i < m.height; i++ {
 		if m.ShowLineNumbers {
 			lineNumber := m.style.EndOfBuffer.Render(fmt.Sprintf(m.lineNumberFormat, string(m.EndOfBufferCharacter)))

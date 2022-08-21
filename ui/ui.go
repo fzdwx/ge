@@ -26,16 +26,6 @@ type (
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 
-	cursorLineStyle = lipgloss.NewStyle().
-			Background(lipgloss.Color("57")).
-			Foreground(lipgloss.Color("230"))
-
-	placeholderStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("238"))
-
-	focusedPlaceholderStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("99"))
-
 	focusedBorderStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("238"))
@@ -46,17 +36,10 @@ var (
 
 func New(cfg *config.Config) *Ui {
 	area := NewTextArea()
-	area.Placeholder = "Type something"
 	area.ShowLineNumbers = true
 	area.Cursor.Style = cursorStyle
-	area.FocusedStyle.Placeholder = focusedPlaceholderStyle
-	area.BlurredStyle.Placeholder = placeholderStyle
-	area.FocusedStyle.CursorLine = cursorLineStyle
 	area.FocusedStyle.Base = focusedBorderStyle
 	area.BlurredStyle.Base = blurredBorderStyle
-	area.KeyMap.DeleteWordBackward.SetEnabled(false)
-	area.KeyMap.MoveDown = key.NewBinding(key.WithKeys("down"))
-	area.KeyMap.MoveUp = key.NewBinding(key.WithKeys("up"))
 	area.Focus()
 	this := &Ui{
 		Keymap:   NewKeymap(),
@@ -84,7 +67,7 @@ func (u *Ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return u, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		u.textarea.SetHeight(msg.Height - 1)
+		u.textarea.SetHeight(msg.Height - 2)
 		u.textarea.SetWidth(msg.Width)
 	case teax.ErrorMsg:
 		// todo handle error msg
